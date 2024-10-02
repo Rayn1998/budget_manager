@@ -1,94 +1,113 @@
+mod budget;
+
+use std::io::stdin;
+use std::process;
+use crate::budget::Budget;
+
+const COMMANDS: [&str; 4] = [
+    "new budget",
+    "show budgets",
+    "help",
+    "exit"
+];
+
 fn main() {
-    let mut budget1 = Budget::new(String::from("First budget"), 500);
+    loop {
+        let mut input = String::new();
 
-    budget1.add(50);
-    budget1.remove(150);
-    budget1.show_transactions();
-    budget1.edit(1, Some("delete"), None);
-    budget1.edit(1, None, Some(-50));
-    budget1.show_transactions();
-    println!("Left budget is: {}", budget1.get_budget());
-    budget1.delete_self();
-}
+        stdin().read_line(&mut input).expect("Something wrong with input itself");
+        let input = input.trim();
 
-struct Budget {
-    name: String,
-    value: i32,
-    transactions: Vec<Transaction>,
-}
-
-#[derive(Debug)]
-struct Transaction {
-    value: i32,
-    method: TransactionMethod,
-}
-
-#[derive(Debug)]
-enum TransactionMethod {
-    Add,
-    Remove,
-}
-
-impl Budget {
-
-    fn new(name: String, amount: i32) -> Budget {
-        Budget {
-            name,
-            value: amount,
-            transactions: Vec::new(),
+        if input.is_empty() {
+            println!("Type something");
+            continue;
         }
+        
+        handle_input_command(input);
     }
     
-    fn add(&mut self, amount: i32) -> () {
-        let method = TransactionMethod::Add;
-        self.transactions.push(Transaction { value: amount, method });
-        self.value += amount
+    // budget1.add(50);
+    // budget1.remove(150);
+    // budget1.show_transactions();
+    // budget1.edit(1, Some("delete"), None);
+    // budget1.edit(1, None, Some(-50));
+    // budget1.show_transactions();
+    // println!("Left budget is: {}", budget1.get_budget());
+    // budget1.delete_self();
+}
+
+
+#[derive(Debug)]
+struct Budgets {
+    budgets: Vec<Budget>,
+}
+
+
+fn create_new_budget() {
+    let mut name = String::new();
+    let mut amount = String::new();
+
+    println!("Enter the name of the budget, please");
+    stdin().read_line(&mut name).expect("Error with entering the name");
+    let name = name.trim();
+
+    if name.is_empty() {
+        println!("You need to specify the budget name");
+        return; // Change on loop
     }
 
-    fn remove(&mut self, amount: i32) -> () {
-        let method = TransactionMethod::Remove;
-        self.transactions.push(Transaction { value: -amount, method });
-        self.value -= amount
-    }
+    println!("Enter the amount of available money for budget");
+    stdin().read_line(&mut amount).expect("Error with entering the amount");
+    
+    let amount = match amount.trim().parse::<i32>() {
+        Ok(value) => value,
+        Err(_) => {
+            println!("Error parsing the amount");
+            return; // Change on loop
+        }
+    };
 
-    fn show_transactions(&self) -> () {
-        for (i, transaction) in self.transactions.iter().enumerate() {
-            println!("{}. {:?} {}", i+1, transaction.method, transaction.value);
+    let budget = Budget::new(name.to_string(), amount);
+    println!("The budget is created: {:?}", budget);
+}
+
+
+fn print_help() -> () {
+    println!("Available commands:");
+    for command in COMMANDS {
+        println!("- {}", command);
+    }
+}
+
+fn exit() -> ! {
+    process::exit(1);
+}
+
+enum Command {
+    NewBudget,
+    Help,
+    Exit,
+    Invalid,
+}
+
+impl Command {
+    fn input_match_command(input: &str) -> Command {
+        match input {
+            "new budget" => Command::NewBudget,
+            "help" => Command::Help,
+            "exit" => Command::Exit,
+            _ => Command::Invalid,
         }
     }
+}
 
-    fn edit(&mut self, index: i32, method: Option<&str>, amount: Option<i32>) -> () {
-        match method {
-            Some("delete") => {
-                println!("Deleting the {}'th transaction", index);
-                let deleted = &mut self.transactions.remove(index as usize -1);
-                println!("Deleted transaction: {}", deleted.value);
-                println!("Deleting happenned successfully");
-            },
-            Some(_) => {
-                println!("Unsupported method");
-            }
-            None => ()
-        }
-
-        match amount {
-            Some(value) => {
-                self.transactions[index as usize-1].value = value;
-            },
-            None => ()
+fn handle_input_command(input: &str) -> () {
+    match Command::input_match_command(input) {
+        Command::NewBudget => create_new_budget(),
+        Command::Help => print_help(),
+        Command::Exit => exit(),
+        Command::Invalid => {
+            println!("It's unexistant command");
         }
     }
-
-    fn get_budget(&mut self) -> i32 {
-        for transaction in &self.transactions {
-            self.value += transaction.value;
-        }
-        self.value
-    }
-
-    fn delete_self(self) {
-        println!("Deleting the budget: {}", self.name);
-        println!("The budget was deleted");
-    }
-
 }
