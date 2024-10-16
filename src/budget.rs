@@ -1,7 +1,7 @@
 #[derive(Debug)]
 pub struct Budget {
-    name: String,
-    value: i32,
+    pub name: String,
+    pub value: i32,
     transactions: Vec<Transaction>,
 }
 

@@ -1,17 +1,28 @@
 mod budget;
+mod budgets;
+mod command;
+
+// Need to understand how to handle the creating and manipulating 
+// the new budget. Find out how to deal with mongodb in Rust
+// Create the schemas and define the collections with the budget data
 
 use std::io::stdin;
 use std::process;
 use crate::budget::Budget;
+use crate::budgets::Budgets;
+use crate::command::*;
 
-const COMMANDS: [&str; 4] = [
+const COMMANDS: [&str; 5] = [
     "new budget",
     "show budgets",
+    "get budget",
     "help",
     "exit"
 ];
 
 fn main() {
+    let mut budgets = Budgets::new();
+    let mut current_budget: Option<usize> = None;
     loop {
         let mut input = String::new();
 
@@ -23,7 +34,7 @@ fn main() {
             continue;
         }
         
-        handle_input_command(input);
+        handle_input_command(input, &mut budgets, &mut current_budget);
     }
     
     // budget1.add(50);
@@ -37,13 +48,44 @@ fn main() {
 }
 
 
-#[derive(Debug)]
-struct Budgets {
-    budgets: Vec<Budget>,
+
+fn handle_input_command(input: &str, budgets: &mut Budgets, current_budget: &mut Option<usize>) -> () {
+    match Command::input_match_command(input) {
+        Command::NewBudget => create_new_budget(budgets),
+        Command::ShowBudgets => {
+            for budget in budgets.budgets.iter() {
+                println!("{}", budget.name);
+            }
+        },
+        Command::ShowBallance => show_ballance(budgets, current_budget),
+        Command::GetBudget => {
+            match get_budget(budgets) {
+                Some(index) => {
+                    *current_budget = Some(index);
+                    println!("Selected budget: {}", budgets.budgets[index].name);
+                },
+                None => println!("Invalid budget index"),
+            }
+        },
+        Command::Add => {
+            // let amount = input.parse::<i32>().expect("Error, parsing the value");
+            // Budget::add(&mut self, amount)
+        },
+        Command::Remove => {
+
+        },
+        Command::Edit => {},
+        Command::ShotTransactions => {},
+        Command::DeleteBudget => {},
+        Command::Help => print_help(),
+        Command::Exit => exit(),
+        Command::Invalid => {
+            println!("It's unexistant command");
+        }
+    }
 }
 
-
-fn create_new_budget() {
+fn create_new_budget(budgets: &mut Budgets) {
     let mut name = String::new();
     let mut amount = String::new();
 
@@ -68,7 +110,33 @@ fn create_new_budget() {
     };
 
     let budget = Budget::new(name.to_string(), amount);
-    println!("The budget is created: {:?}", budget);
+    budgets.add_budget(budget);
+    println!("The budget is created: {}", name);
+}
+
+fn get_budget(budgets: &Budgets) -> Option<usize> {
+    println!("Choose the budget by entering the number");
+    
+    let mut input_index = String::new();
+
+    stdin().read_line(&mut input_index).expect("Error with input");
+
+    let index = match input_index.trim().parse::<usize>() {
+        Ok(index) => index - 1,
+        Err(_) => return None,
+    };
+
+    if index < budgets.budgets.len() {
+        Some(index)
+    } else {
+        None
+    }
+}
+
+fn show_ballance(budgets: &Budgets, current_budget: &mut Option<usize>) -> () {
+    let budget = budgets.budgets.get(current_budget.unwrap()).unwrap();
+    let ballance = budget.value;
+    println!("The current ballance is: {}", ballance);
 }
 
 
@@ -81,33 +149,4 @@ fn print_help() -> () {
 
 fn exit() -> ! {
     process::exit(1);
-}
-
-enum Command {
-    NewBudget,
-    Help,
-    Exit,
-    Invalid,
-}
-
-impl Command {
-    fn input_match_command(input: &str) -> Command {
-        match input {
-            "new budget" => Command::NewBudget,
-            "help" => Command::Help,
-            "exit" => Command::Exit,
-            _ => Command::Invalid,
-        }
-    }
-}
-
-fn handle_input_command(input: &str) -> () {
-    match Command::input_match_command(input) {
-        Command::NewBudget => create_new_budget(),
-        Command::Help => print_help(),
-        Command::Exit => exit(),
-        Command::Invalid => {
-            println!("It's unexistant command");
-        }
-    }
 }
