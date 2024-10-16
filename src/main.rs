@@ -8,14 +8,20 @@ mod command;
 
 use std::io::stdin;
 use std::process;
-use crate::budget::Budget;
+use crate::budget::{ Budget, EditInput };
 use crate::budgets::Budgets;
 use crate::command::*;
 
-const COMMANDS: [&str; 5] = [
+const COMMANDS: [&str; 11] = [
     "new budget",
     "show budgets",
     "get budget",
+    "show ballance",
+    "add",
+    "remove",
+    "edit transaction",
+    "show transactions",
+    "delete budget",
     "help",
     "exit"
 ];
@@ -36,54 +42,26 @@ fn main() {
         
         handle_input_command(input, &mut budgets, &mut current_budget);
     }
-    
-    // budget1.add(50);
-    // budget1.remove(150);
-    // budget1.show_transactions();
-    // budget1.edit(1, Some("delete"), None);
-    // budget1.edit(1, None, Some(-50));
-    // budget1.show_transactions();
-    // println!("Left budget is: {}", budget1.get_budget());
-    // budget1.delete_self();
 }
-
 
 
 fn handle_input_command(input: &str, budgets: &mut Budgets, current_budget: &mut Option<usize>) -> () {
     match Command::input_match_command(input) {
         Command::NewBudget => create_new_budget(budgets),
-        Command::ShowBudgets => {
-            for budget in budgets.budgets.iter() {
-                println!("{}", budget.name);
-            }
-        },
+        Command::ShowBudgets => show_budgets(budgets),
         Command::ShowBallance => show_ballance(budgets, current_budget),
-        Command::GetBudget => {
-            match get_budget(budgets) {
-                Some(index) => {
-                    *current_budget = Some(index);
-                    println!("Selected budget: {}", budgets.budgets[index].name);
-                },
-                None => println!("Invalid budget index"),
-            }
-        },
-        Command::Add => {
-            // let amount = input.parse::<i32>().expect("Error, parsing the value");
-            // Budget::add(&mut self, amount)
-        },
-        Command::Remove => {
-
-        },
-        Command::Edit => {},
-        Command::ShotTransactions => {},
-        Command::DeleteBudget => {},
+        Command::GetBudget => get_budget(budgets, current_budget),
+        Command::Add => add_to_budget(budgets, current_budget),
+        Command::Remove => remove_from_budget(budgets, current_budget),
+        Command::ShotTransactions => show_transactions(budgets, current_budget),
+        Command::EditTransaction => edit_transaction(budgets, current_budget),
+        Command::DeleteBudget => delete_budget(budgets, current_budget),
         Command::Help => print_help(),
         Command::Exit => exit(),
-        Command::Invalid => {
-            println!("It's unexistant command");
-        }
+        Command::Invalid => invalid_input(),
     }
 }
+
 
 fn create_new_budget(budgets: &mut Budgets) {
     let mut name = String::new();
@@ -114,29 +92,120 @@ fn create_new_budget(budgets: &mut Budgets) {
     println!("The budget is created: {}", name);
 }
 
-fn get_budget(budgets: &Budgets) -> Option<usize> {
-    println!("Choose the budget by entering the number");
-    
-    let mut input_index = String::new();
 
-    stdin().read_line(&mut input_index).expect("Error with input");
-
-    let index = match input_index.trim().parse::<usize>() {
-        Ok(index) => index - 1,
-        Err(_) => return None,
-    };
-
-    if index < budgets.budgets.len() {
-        Some(index)
-    } else {
-        None
+fn show_budgets(budgets: &Budgets) -> () {
+    for budget in budgets.budgets.iter() {
+        println!("{}", budget.name);
     }
 }
 
+
+fn get_budget(budgets: &Budgets, current_budget: &mut Option<usize>) -> () {
+    println!("Choose the budget by entering the number");
+    
+    loop {
+
+        let mut input = String::new();
+        stdin().read_line(&mut input).expect("Error with input");
+    
+        let index = match input.trim().parse::<usize>() {
+            Ok(value) if value > 0 => value - 1,
+            Ok(_) => {
+                println!("Please, enter the index greater than 0");
+                continue;
+            },
+            Err(_) => {
+                println!("Enter the number, please");
+                continue;
+            },
+        };
+        if index < budgets.budgets.len() {
+            *current_budget = Some(index);
+            println!("Selected budget: {}", budgets.budgets[index].name);
+            break;
+        } else {
+            println!("Invalid budget index");
+            continue;
+        }
+    }
+}
+
+
 fn show_ballance(budgets: &Budgets, current_budget: &mut Option<usize>) -> () {
-    let budget = budgets.budgets.get(current_budget.unwrap()).unwrap();
-    let ballance = budget.value;
+    let ballance = budgets.budgets.get(current_budget.unwrap()).unwrap().get_budget();
     println!("The current ballance is: {}", ballance);
+}
+
+
+fn add_to_budget(budgets: &mut Budgets, current_budget: &mut Option<usize>) -> () {
+    let mut amount = String::new();
+    stdin().read_line(&mut amount).expect("Error reading the amoung");
+    let amount = amount.trim().parse::<i32>().expect("Error, parsing the value");
+
+    budgets.budgets
+        .get_mut(current_budget.unwrap())
+        .unwrap()
+        .add(amount);
+}
+
+
+fn remove_from_budget(budgets: &mut Budgets, current_budget: &mut Option<usize>) -> () {
+    let mut amount = String::new();
+    stdin().read_line(&mut amount).expect("Error reading the amount");
+    let amount = amount.trim().parse::<i32>().expect("Error, parsing the value");
+
+    budgets.budgets
+        .get_mut(current_budget.unwrap())
+        .unwrap()
+        .remove(amount);
+}
+
+
+fn show_transactions(budgets: &mut Budgets, current_budget: &mut Option<usize>) -> () {
+    budgets.budgets
+        .get(current_budget.unwrap())
+        .unwrap()
+        .show_transactions();
+}
+
+
+fn edit_transaction(budgets: &mut Budgets, current_budget: &mut Option<usize>) -> () {
+    println!("Enter the number of transaction");
+        let mut index = String::new();
+        stdin().read_line(&mut index).expect("Error reading the index");
+        let index = index.trim().parse::<i32>().expect("Error parsing the index");
+
+        println!("Enter the number for edit the transaction or type \"delete\" to delete it");
+        let mut method = String::new();
+        stdin().read_line(&mut method).expect("Error reading the method");
+        match method.trim().parse::<i32>() {
+            Ok(value) => {
+                budgets.budgets
+                    .get_mut(current_budget.unwrap())
+                    .unwrap()
+                    .edit(index, EditInput::Amount(value));
+            }, 
+            Err(_) => {
+                if method.trim() == "delete" {
+                    budgets.budgets
+                        .get_mut(current_budget.unwrap())
+                        .unwrap()
+                        .edit(index, EditInput::Delete);
+                } else {
+                    println!("Unsupported method");
+                }
+            }
+        }
+}
+
+
+fn delete_budget(budgets: &mut Budgets, current_budget: &mut Option<usize>) {
+    budgets.budgets.remove(current_budget.unwrap());
+}
+
+
+fn invalid_input() -> () {
+    println!("It's unexistant command");
 }
 
 
@@ -146,6 +215,7 @@ fn print_help() -> () {
         println!("- {}", command);
     }
 }
+
 
 fn exit() -> ! {
     process::exit(1);
