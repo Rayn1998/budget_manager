@@ -58,7 +58,7 @@ impl Budget {
         }
     }
 
-    pub fn get_budget(&self) -> i32 {
+    pub fn get_ballance(&self) -> i32 {
         let mut ballance: i32 = self.value;
         for transaction in &self.transactions {
             match transaction.method {

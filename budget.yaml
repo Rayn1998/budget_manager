@@ -7,3 +7,9 @@ budgets:
 - name: Budget_2
   value: 2500
   transactions: []
+- name: Budget_3
+  value: 2500
+  transactions: []
+- name: Budget_4
+  value: 10000
+  transactions: []
