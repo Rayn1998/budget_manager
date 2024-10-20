@@ -2,6 +2,10 @@ budgets:
 - name: Budget_1
   value: 3000
   transactions:
+  - value: -500
+    method: Add
+  - value: -1000
+    method: Remove
 - name: Budget_2
   value: 2500
   transactions: []

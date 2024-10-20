@@ -52,9 +52,52 @@ impl Budget {
     }
 
     pub fn edit(&mut self, index: i32, method: EditInput) -> () {
+        let old_method = &self.transactions[index as usize-1].method;
+
         match method {
             EditInput::Amount(value) => {
-                self.transactions[index as usize-1].value = value;
+                match old_method {
+                    TransactionMethod::Add => {
+                        // Change + to -
+                        let old_value = self.transactions[index as usize-1].value;
+
+                        if value.is_negative() {
+                            let difference = old_value + value.abs();
+                            self.transactions[index as usize-1].method = TransactionMethod::Remove;
+                            self.transactions[index as usize-1].value = value;
+                            self.value = self.value - difference;
+                        } else {
+                            // Change + to + 
+                            if old_value > value {
+                                let difference = old_value - value;
+                                self.value = self.value - difference;
+                            } else {
+                                let difference = old_value - value;
+                                self.transactions[index as usize-1].value = value;
+                                self.value = self.value + difference.abs();
+                            }
+                        }
+                    },
+                    TransactionMethod::Remove => {
+                        // Change - to -
+                        let old_value = self.transactions[index as usize-1].value;
+
+                        if value.is_negative() {
+                            if old_value > value {
+                                let difference = old_value - value;
+                                self.value = self.value - difference.abs();
+                            } else {
+                                let difference = old_value - value;
+                                self.value = self.value + difference.abs();   
+                            }
+                        } else {
+                            // Change - to +
+                            let difference = old_value.abs() + value;
+                            self.transactions[index as usize-1].method = TransactionMethod::Add;
+                            self.value = self.value + difference;
+                        }
+                    }
+                }
             },
             EditInput::Delete => {
                 let deleted = &mut self.transactions.remove(index as usize -1);
