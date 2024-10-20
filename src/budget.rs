@@ -32,11 +32,17 @@ impl Budget {
     pub fn add(&mut self, amount: i32) -> () {
         let method = TransactionMethod::Add;
         self.transactions.push(Transaction { value: amount, method });
+        self.value = self.value + amount;
     }
 
     pub fn remove(&mut self, amount: i32) -> () {
+        if amount > self.value {
+            println!("You can't go the negative ballance");
+            return;
+        }
         let method = TransactionMethod::Remove;
-        self.transactions.push(Transaction { value: amount, method });
+        self.transactions.push(Transaction { value: - amount, method });
+        self.value = self.value - amount;
     }
 
     pub fn show_transactions(&self) -> () {
@@ -59,18 +65,19 @@ impl Budget {
     }
 
     pub fn get_ballance(&self) -> i32 {
-        let mut ballance: i32 = self.value;
-        for transaction in &self.transactions {
-            match transaction.method {
-                TransactionMethod::Add => {
-                    ballance += transaction.value;
-                },
-                TransactionMethod::Remove => {
-                    ballance -= transaction.value;
-                }
-            } 
-        }
-        ballance
+        // let mut ballance: i32 = self.value;
+        // for transaction in &self.transactions {
+        //     match transaction.method {
+        //         TransactionMethod::Add => {
+        //             ballance += transaction.value;
+        //         },
+        //         TransactionMethod::Remove => {
+        //             ballance -= transaction.value;
+        //         }
+        //     } 
+        // }
+        // ballance
+        self.value
     }
 }
 
