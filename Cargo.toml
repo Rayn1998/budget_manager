@@ -4,4 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-mongodb = "3.1.0"
+eframe = "0.29.1"
+egui = "0.29.1"
+serde = { version = "1.0.210", features = ["derive"] }
+serde_yaml = "0.9.33"

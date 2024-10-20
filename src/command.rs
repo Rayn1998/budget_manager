@@ -9,6 +9,7 @@ pub enum Command {
     GetBudget,
     DeleteBudget,
     Help,
+    Save,
     Exit,
     Invalid,
 }
@@ -18,7 +19,7 @@ impl Command {
         match input {
             "new budget" => Command::NewBudget,
             "show budgets" => Command::ShowBudgets,
-            "get budget" => Command::GetBudget,
+            "set budget" => Command::GetBudget,
             "show ballance" => Command::ShowBallance,
             "add" => Command::Add,
             "remove" => Command::Remove,
@@ -26,6 +27,7 @@ impl Command {
             "show transactions" => Command::ShotTransactions,
             "delete budget" => Command::DeleteBudget,
             "help" => Command::Help,
+            "save" => Command::Save,
             "exit" => Command::Exit,
             _ => Command::Invalid,
         }

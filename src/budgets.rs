@@ -1,6 +1,7 @@
 use crate::Budget;
+use serde::{ Serialize, Deserialize };
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Budgets {
     pub budgets: Vec<Budget>,
 }

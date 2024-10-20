@@ -1,0 +1,9 @@
+budgets:
+- name: Budget_1
+  value: 1500
+  transactions:
+  - value: 50
+    method: Add
+- name: Budget_2
+  value: 2500
+  transactions: []

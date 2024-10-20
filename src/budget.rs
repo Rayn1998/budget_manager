@@ -1,17 +1,19 @@
-#[derive(Debug)]
+use serde::{ Serialize, Deserialize }; 
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Budget {
     pub name: String,
     value: i32,
     transactions: Vec<Transaction>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Transaction {
     pub value: i32,
     pub method: TransactionMethod,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum TransactionMethod {
     Add,
     Remove,
@@ -70,12 +72,6 @@ impl Budget {
         }
         ballance
     }
-
-    // pub fn delete_self(self) {
-    //     println!("Deleting the budget: {}", self.name);
-    //     println!("The budget was deleted");
-    // }
-
 }
 
 pub enum EditInput {

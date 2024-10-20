@@ -2,11 +2,8 @@ mod budget;
 mod budgets;
 mod command;
 
-// Need to understand how to handle the creating and manipulating 
-// the new budget. Find out how to deal with mongodb in Rust
-// Create the schemas and define the collections with the budget data
-
-use std::io::stdin;
+use std::fs::File;
+use std::io::{ stdin, Read, Write };
 use std::process;
 use crate::budget::{ Budget, EditInput };
 use crate::budgets::Budgets;
@@ -15,7 +12,7 @@ use crate::command::*;
 const COMMANDS: [&str; 11] = [
     "new budget",
     "show budgets",
-    "get budget",
+    "set budget",
     "show ballance",
     "add",
     "remove",
@@ -27,9 +24,34 @@ const COMMANDS: [&str; 11] = [
 ];
 
 fn main() {
+
     let mut budgets = Budgets::new();
     let mut current_budget: Option<usize> = None;
+
+    let mut yaml: File = match File::open("budget.yaml") {
+        Ok(file) => file,
+        Err(_) => {
+            println!("Can't find the budget file, creating the new one...");
+            File::create_new("budget.yaml").expect("Can't create a file")
+        },
+    };
+    
+    let mut file_data = String::new();
+    yaml.read_to_string(&mut file_data).unwrap();
+    match serde_yaml::from_str(&file_data) {
+        Ok(data) => {
+            budgets = data;
+            println!("budget.yaml successfully read");
+            println!("Here are the budgets:");
+            show_budgets(&budgets);
+        },
+        Err(_) => {
+            println!("There are no budgets yet");
+        }
+    }
+
     loop {
+
         let mut input = String::new();
 
         stdin().read_line(&mut input).expect("Something wrong with input itself");
@@ -45,7 +67,11 @@ fn main() {
 }
 
 
-fn handle_input_command(input: &str, budgets: &mut Budgets, current_budget: &mut Option<usize>) -> () {
+fn handle_input_command(
+    input: &str, 
+    budgets: &mut Budgets, 
+    current_budget: &mut Option<usize>,
+) -> () {
     match Command::input_match_command(input) {
         Command::NewBudget => create_new_budget(budgets),
         Command::ShowBudgets => show_budgets(budgets),
@@ -57,6 +83,7 @@ fn handle_input_command(input: &str, budgets: &mut Budgets, current_budget: &mut
         Command::EditTransaction => edit_transaction(budgets, current_budget),
         Command::DeleteBudget => delete_budget(budgets, current_budget),
         Command::Help => print_help(),
+        Command::Save => save(budgets),
         Command::Exit => exit(),
         Command::Invalid => invalid_input(),
     }
@@ -258,8 +285,18 @@ fn edit_transaction(budgets: &mut Budgets, current_budget: &mut Option<usize>) -
 fn delete_budget(budgets: &mut Budgets, current_budget: &mut Option<usize>) {
     check_current_budget(current_budget);
     check_budgets(budgets);
-    
+
     budgets.budgets.remove(current_budget.unwrap());
+    println!("Budget has been successfully deleted");
+}
+
+
+fn save(budgets: &Budgets) -> () {
+    let serialized: String = serde_yaml::to_string(budgets).unwrap();
+    let serialized = serialized.as_bytes();
+    let mut file = File::create("budget.yaml").unwrap();
+    file.write(serialized).unwrap();
+    println!("Budgets successfully saved");
 }
 
 
