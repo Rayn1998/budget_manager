@@ -6,7 +6,7 @@ pub enum Command {
     Remove,
     EditTransaction,
     ShotTransactions,
-    GetBudget,
+    SetBudget,
     DeleteBudget,
     Help,
     Save,
@@ -15,11 +15,11 @@ pub enum Command {
 }
 
 impl Command {
-    pub fn input_match_command(input: &str) -> Command {
-        match input {
+    pub fn input_match_command(command: &str) -> Command {
+        match command {
             "new budget" => Command::NewBudget,
             "show budgets" => Command::ShowBudgets,
-            "set budget" => Command::GetBudget,
+            "set budget" => Command::SetBudget,
             "show ballance" => Command::ShowBallance,
             "add" => Command::Add,
             "remove" => Command::Remove,

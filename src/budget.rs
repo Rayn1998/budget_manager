@@ -68,11 +68,12 @@ impl Budget {
                             self.value = self.value - difference;
                         } else {
                             // Change + to + 
+                            let difference = old_value - value;
+
                             if old_value > value {
-                                let difference = old_value - value;
+                                self.transactions[index as usize-1].value = value;
                                 self.value = self.value - difference;
                             } else {
-                                let difference = old_value - value;
                                 self.transactions[index as usize-1].value = value;
                                 self.value = self.value + difference.abs();
                             }
@@ -83,17 +84,20 @@ impl Budget {
                         let old_value = self.transactions[index as usize-1].value;
 
                         if value.is_negative() {
+                            let difference = old_value - value;
+
                             if old_value > value {
-                                let difference = old_value - value;
                                 self.value = self.value - difference.abs();
+                                self.transactions[index as usize-1].value = value;
                             } else {
-                                let difference = old_value - value;
-                                self.value = self.value + difference.abs();   
+                                self.value = self.value - difference;
+                                self.transactions[index as usize-1].value = value;
                             }
                         } else {
                             // Change - to +
                             let difference = old_value.abs() + value;
                             self.transactions[index as usize-1].method = TransactionMethod::Add;
+                            self.transactions[index as usize-1].value = value;
                             self.value = self.value + difference;
                         }
                     }
@@ -108,18 +112,6 @@ impl Budget {
     }
 
     pub fn get_ballance(&self) -> i32 {
-        // let mut ballance: i32 = self.value;
-        // for transaction in &self.transactions {
-        //     match transaction.method {
-        //         TransactionMethod::Add => {
-        //             ballance += transaction.value;
-        //         },
-        //         TransactionMethod::Remove => {
-        //             ballance -= transaction.value;
-        //         }
-        //     } 
-        // }
-        // ballance
         self.value
     }
 }
