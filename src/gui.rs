@@ -1,4 +1,4 @@
-GUI
+// GUI
     let gui_options = eframe::NativeOptions::default();
 
     let mut budget_create_window = false;

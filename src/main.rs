@@ -1,16 +1,17 @@
+mod app_options;
 mod budget;
 mod budgets;
 mod command;
-mod app_options;
 
-use std::fs::File;
-use std::io::{ stdin, Read, Write };
-use std::process;
-use crate::budget::{ Budget, EditInput };
+use crate::app_options::AppOptions;
+use crate::budget::{Budget, EditInput};
 use crate::budgets::Budgets;
 use crate::command::*;
-use crate::app_options::AppOptions;
+use std::fs::File;
+use std::io::{stdin, Read, Write};
+use std::process;
 
+use colored::*;
 
 const COMMANDS: [&str; 11] = [
     "new budget",
@@ -23,11 +24,10 @@ const COMMANDS: [&str; 11] = [
     "show transactions",
     "delete budget <index>",
     "help",
-    "exit"
+    "exit",
 ];
 
 fn main() {
-
     let mut budgets = Budgets::new();
     let mut current_budget: Option<usize> = None;
 
@@ -35,27 +35,30 @@ fn main() {
     let mut yaml: File = match File::open("budget.yaml") {
         Ok(file) => file,
         Err(_) => {
-            println!("Can't find the budget file, creating the new one...");
+            println!(
+                "{}",
+                "Can't find the budget file, creating the new one...".red()
+            );
             File::create_new("budget.yaml").expect("Can't create a file")
-        },
+        }
     };
-    
+
     let mut file_data = String::new();
     yaml.read_to_string(&mut file_data).unwrap();
     match serde_yaml::from_str(&file_data) {
         Ok(data) => {
             budgets = data;
-            println!("budget.yaml successfully read");
-            println!("Here are the budgets:");
+            println!("{}", "\nbudget.yaml successfully read".green());
+            println!("{}", "Here are the budgets:".green());
             show_budgets(&budgets);
-        },
+        }
         Err(_) => {
-            println!("There are no budgets yet");
+            println!("{}", "There are no budgets yet".red());
         }
     }
 
     let mut options = AppOptions {
-        budgets: &mut budgets, 
+        budgets: &mut budgets,
         current_budget: &mut current_budget,
         something_changed: false,
         been_saved: false,
@@ -63,14 +66,15 @@ fn main() {
 
     // MAIN LOOP
     loop {
-
         let mut input = String::new();
 
-        stdin().read_line(&mut input).expect("Something wrong with input itself");
+        stdin()
+            .read_line(&mut input)
+            .expect("Something wrong with input itself");
         let input = input.trim();
 
         if input.trim().is_empty() {
-            println!("Type something");
+            println!("{}", "Type something".yellow());
             continue;
         }
 
@@ -78,12 +82,11 @@ fn main() {
     }
 }
 
-
 fn handle_input_command(input: &str, options: &mut AppOptions) -> () {
     let mut command: &str = input;
     let mut appendix: &str = "0";
 
-    // Divides input if it has any number. 
+    // Divides input if it has any number.
     // Because only add ot remove operations need it
     // And to save the ability to write commands divided withh space
     if input.chars().any(|ch| ch.is_numeric()) {
@@ -109,7 +112,6 @@ fn handle_input_command(input: &str, options: &mut AppOptions) -> () {
     }
 }
 
-
 fn create_new_budget(options: &mut AppOptions) {
     let budgets = &mut options.budgets;
     let mut name = String::new();
@@ -118,11 +120,13 @@ fn create_new_budget(options: &mut AppOptions) {
 
     loop {
         name.clear();
-        println!("Enter the name of the budget, please");
-        stdin().read_line(&mut name).expect("Error with entering the name");
-    
+        println!("{}", "Enter the name of the budget, please".yellow());
+        stdin()
+            .read_line(&mut name)
+            .expect("Error with entering the name");
+
         if name.trim().is_empty() {
-            println!("You need to specify the budget name");
+            println!("{}", "You need to specify the budget name".red());
             continue;
         } else {
             break;
@@ -132,13 +136,15 @@ fn create_new_budget(options: &mut AppOptions) {
     loop {
         amount_input.clear();
         println!("Enter the amount of available money for budget");
-        stdin().read_line(&mut amount_input).expect("Error with entering the amount");
-        
+        stdin()
+            .read_line(&mut amount_input)
+            .expect("Error with entering the amount");
+
         match amount_input.trim().parse::<i32>() {
             Ok(value) => {
                 amount = value;
                 break;
-            },
+            }
             Err(_) => {
                 println!("Enter the amount by numbers, please...");
                 continue;
@@ -153,7 +159,6 @@ fn create_new_budget(options: &mut AppOptions) {
     println!("The budget is created: {}", name.trim());
 }
 
-
 fn show_budgets(budgets: &Budgets) -> () {
     if check_budgets(budgets) {
         for (i, budget) in budgets.budgets.iter().enumerate() {
@@ -162,51 +167,47 @@ fn show_budgets(budgets: &Budgets) -> () {
     }
 }
 
-
 fn set_budget(options: &mut AppOptions, input_index: &str) -> () {
     if check_budgets(options.budgets) {
-        // println!("Choose the budget by entering the number");
-        // show_budgets(options.budgets);
-        
-        // loop {
-    
-            // let mut input = String::new();
-            // stdin().read_line(&mut input).expect("Error with input");
-        
-            let index = match input_index.trim().parse::<usize>() {
-                Ok(value) if value > 0 => value - 1,
-                Ok(_) => {
-                    println!("Please, enter the index greater than 0");
-                    return;
-                    // continue;
-                },
-                Err(_) => {
-                    println!("Enter the number, please");
-                    return;
-                    // continue;
-                },
-            };
-
-            if index < options.budgets.budgets.len() {
-                *options.current_budget = Some(index);
-                println!("Selected budget: {}", options.budgets.budgets[index].name);
-                // break;
-            } else {
-                println!("Invalid budget index");
+        let index = match input_index.trim().parse::<usize>() {
+            Ok(value) if value > 0 => value - 1,
+            Ok(_) => {
+                println!(
+                    "{}",
+                    "Please, enter the index greater than 0".black().on_red()
+                );
+                return;
                 // continue;
             }
-        // }
+            Err(_) => {
+                println!("Enter the number, please");
+                return;
+                // continue;
+            }
+        };
+
+        if index < options.budgets.budgets.len() {
+            *options.current_budget = Some(index);
+            println!("Selected budget: {}", options.budgets.budgets[index].name);
+            // break;
+        } else {
+            println!("Invalid budget index");
+            // continue;
+        }
     }
 }
-
 
 fn show_ballance(options: &mut AppOptions) -> () {
     if check_current_budget(options.current_budget) {
-        let ballance = options.budgets.budgets.get(options.current_budget.unwrap()).unwrap().get_ballance();
+        let ballance = options
+            .budgets
+            .budgets
+            .get(options.current_budget.unwrap())
+            .unwrap()
+            .get_ballance();
         println!("The current ballance is: {}", ballance);
     }
 }
-
 
 fn add_to_budget(options: &mut AppOptions, amount_input: &str) -> () {
     if check_current_budget(options.current_budget) && check_budgets(options.budgets) {
@@ -217,15 +218,17 @@ fn add_to_budget(options: &mut AppOptions, amount_input: &str) -> () {
                 Ok(value) => {
                     amount = value;
                     break;
-                },
+                }
                 Err(_) => {
                     println!("Enter the number, please");
                     continue;
                 }
             };
         }
-    
-        options.budgets.budgets
+
+        options
+            .budgets
+            .budgets
             .get_mut(options.current_budget.unwrap())
             .unwrap()
             .add(amount);
@@ -233,9 +236,7 @@ fn add_to_budget(options: &mut AppOptions, amount_input: &str) -> () {
         options.changes_true();
         options.been_saved_false();
     }
-
 }
-
 
 fn remove_from_budget(options: &mut AppOptions, amount_input: &str) -> () {
     if check_current_budget(options.current_budget) && check_budgets(options.budgets) {
@@ -246,15 +247,17 @@ fn remove_from_budget(options: &mut AppOptions, amount_input: &str) -> () {
                 Ok(value) => {
                     amount = value;
                     break;
-                },
+                }
                 Err(_) => {
                     println!("Error, parsing the value");
                     continue;
                 }
             }
         }
-    
-        options.budgets.budgets
+
+        options
+            .budgets
+            .budgets
             .get_mut(options.current_budget.unwrap())
             .unwrap()
             .remove(amount);
@@ -262,43 +265,50 @@ fn remove_from_budget(options: &mut AppOptions, amount_input: &str) -> () {
         options.changes_true();
         options.been_saved_false();
     }
-
 }
-
 
 fn show_transactions(budgets: &mut Budgets, current_budget: &mut Option<usize>) -> () {
     check_current_budget(current_budget);
     check_budgets(budgets);
 
-    budgets.budgets
+    budgets
+        .budgets
         .get(current_budget.unwrap())
         .unwrap()
         .show_transactions();
 }
 
-
 fn edit_transaction(budgets: &mut Budgets, current_budget: &mut Option<usize>) -> () {
     if check_current_budget(current_budget) && check_budgets(budgets) {
         println!("Enter the number of transaction");
         show_transactions(budgets, current_budget);
-    
+
         let mut index = String::new();
-        stdin().read_line(&mut index).expect("Error reading the index");
-        let index = index.trim().parse::<i32>().expect("Error parsing the index");
-    
+        stdin()
+            .read_line(&mut index)
+            .expect("Error reading the index");
+        let index = index
+            .trim()
+            .parse::<i32>()
+            .expect("Error parsing the index");
+
         println!("Enter the number for edit the transaction or type \"delete\" to delete it");
         let mut method = String::new();
-        stdin().read_line(&mut method).expect("Error reading the method");
+        stdin()
+            .read_line(&mut method)
+            .expect("Error reading the method");
         match method.trim().parse::<i32>() {
             Ok(value) => {
-                budgets.budgets
+                budgets
+                    .budgets
                     .get_mut(current_budget.unwrap())
                     .unwrap()
                     .edit(index, EditInput::Amount(value));
-            }, 
+            }
             Err(_) => {
                 if method.trim() == "delete" {
-                    budgets.budgets
+                    budgets
+                        .budgets
                         .get_mut(current_budget.unwrap())
                         .unwrap()
                         .edit(index, EditInput::Delete);
@@ -310,7 +320,6 @@ fn edit_transaction(budgets: &mut Budgets, current_budget: &mut Option<usize>) -
     }
 }
 
-
 fn delete_budget(options: &mut AppOptions, input_index: &str) -> () {
     if check_budgets(options.budgets) {
         match input_index.parse::<usize>() {
@@ -318,14 +327,13 @@ fn delete_budget(options: &mut AppOptions, input_index: &str) -> () {
                 options.budgets.budgets.remove(index - 1);
                 println!("Budget has been successfully deleted");
                 options.changes_true();
-            },
+            }
             Err(_) => {
                 println!("Enter the number for index, please");
             }
         }
     }
 }
-
 
 fn save(options: &mut AppOptions) -> () {
     let serialized: String = serde_yaml::to_string(options.budgets).unwrap();
@@ -337,16 +345,14 @@ fn save(options: &mut AppOptions) -> () {
     println!("Budgets successfully saved");
 }
 
-
 fn check_current_budget(current_budget: &mut Option<usize>) -> bool {
     if *current_budget == None {
         println!("Choose the budget to operate first, please\n type \"set budget\"");
-        false 
+        false
     } else {
         true
     }
 }
-
 
 fn check_budgets(budgets: &Budgets) -> bool {
     if budgets.budgets.len() == 0 {
@@ -357,19 +363,16 @@ fn check_budgets(budgets: &Budgets) -> bool {
     }
 }
 
-
 fn invalid_input() -> () {
     println!("It's unexistant command");
 }
 
-
 fn print_help() -> () {
-    println!("Available commands:");
+    println!("{}", "\nAvailable commands:".bold());
     for command in COMMANDS {
-        println!("- {}", command);
+        println!("- {}", command.purple());
     }
 }
-
 
 fn exit(options: &mut AppOptions) -> ! {
     if !options.something_changed {
@@ -385,10 +388,10 @@ fn exit(options: &mut AppOptions) -> ! {
                 "y" => {
                     save(options);
                     exit(options);
-                },
+                }
                 "n" => {
                     process::exit(1);
-                },
+                }
                 _ => {
                     println!("Type \"y\" or \"n\", please");
                     continue;
